@@ -63,6 +63,8 @@ func client(send chan string, recieve chan string) {
 		for listeningForAck {
 			select {
 			case ack := <-recieve:
+				//we add a delay to simulate network connection delay
+				time.Sleep(time.Millisecond * time.Duration(500))
 				if strings.Contains(ack, "SEQUENCE NUMBER: "+stringSequenceNumber) {
 					// Received the expected ACK from server
 					fmt.Println("CLIENT: RECIEVED ACKNOWLEDGEMENT FROM SERVER FOR RECIEVED MESSAGE WITH SEQUENCE NUMBER: ", stringSequenceNumber, ack)
@@ -73,7 +75,7 @@ func client(send chan string, recieve chan string) {
 					listeningForAck = false
 					break
 				}
-			case <-time.After(10000 * time.Millisecond):
+			case <-time.After(5000 * time.Millisecond):
 				// Timeout occurred.
 				fmt.Println("CLIENT: TIMEOUT OCCURRED WAITING FOR ACKNOWLEDGEMENT FROM SERVER FOR MESSAGE WITH SEQUENCE NUMBER", stringSequenceNumber)
 				listeningForAck = false
@@ -116,10 +118,6 @@ func server(send chan string, recieve chan string) {
 		// We validate ack message from client. If everything matches, then the 3-way handshake has been a success.
 		//A connection is established!
 		if split[0] == "ACK" {
-			//clientISN, err := strconv.Atoi(split[2])
-			//fmt.Println("CLIENT ISN:", clientISN)
-			//serverISN, err := strconv.Atoi(split[1])
-			//fmt.Println("SERVER ISN:", serverISN, isn)
 
 			if err == nil && split[1] == strconv.Itoa(isn) {
 				connected = true
@@ -135,12 +133,15 @@ func server(send chan string, recieve chan string) {
 	time.Sleep(time.Millisecond * time.Duration(3000))
 	for connected {
 
-		//we add a delay before sending responce
+		//we add a delay before sending response
 		time.Sleep(time.Millisecond * time.Duration(1000))
 
 		//recieve request
 		var request = <-recieve
 		fmt.Println("SERVER: Recieved request from client:", request)
+
+		//we add a delay before sending response
+		time.Sleep(time.Millisecond * time.Duration(1000))
 
 		//Generate response and send back to client
 		var response = "SERVER: Response on request: " + request
